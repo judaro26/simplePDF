@@ -47,7 +47,7 @@ app.innerHTML = `
       </div>
       <section class="canvas-scroll" id="canvas-scroll">
         <div class="editor-placeholder" id="placeholder"><span class="placeholder-icon">▤</span><h1>Make your PDF your own.</h1><p>Click existing text to replace its visible wording, or add highlights, freehand notes, shapes, and a drawn signature. Your file stays in this browser.</p><button class="editor-btn primary" id="choose-file">Choose a PDF</button><small>PDF · up to 50 MB · no upload</small></div>
-        <div class="page-wrap mode-select" id="page-wrap" hidden><canvas id="pdf-canvas"></canvas><canvas id="overlay-canvas"></canvas><div id="text-layer" class="text-layer"></div></div>
+        <div class="page-wrap mode-select text-select-mode" id="page-wrap" hidden><canvas id="pdf-canvas"></canvas><canvas id="overlay-canvas"></canvas><div id="text-layer" class="text-layer"></div></div>
       </section>
       <div class="editor-status" id="editor-status" role="status">Open a PDF to begin. Files are processed locally in your browser.</div>
     </main>
