@@ -1,0 +1,2 @@
+.editor-options-toggle{display:none}
+@media(max-width:950px){.editor-options-toggle{display:inline-flex}.inspector{position:fixed;display:none;right:0;top:58px;bottom:29px;width:min(270px,86vw);z-index:5;box-shadow:-14px 0 35px #163b2d26;border-left:1px solid #dce6e1;overflow:auto}.inspector.open{display:block}}
