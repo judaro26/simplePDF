@@ -14,6 +14,7 @@ export default defineConfig({
         manualChunks(id) {
           if (id.includes('/node_modules/pdf-lib/')) return 'pdf-engine';
           if (id.includes('/node_modules/jszip/')) return 'zip-engine';
+          if (id.includes('/node_modules/pdfjs-dist/')) return 'pdfjs-engine';
         },
       },
     },

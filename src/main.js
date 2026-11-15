@@ -4,7 +4,7 @@ import './style.css';
 import './panel.css';
 
 const tools = [
-  { id: 'editor', title: 'PDF Editor', description: 'Add text, highlights, drawings, and a signature.', icon: '✎', category: 'Edit', ready: true, editor: true },
+  { id: 'editor', title: 'PDF Editor', description: 'Click text to replace it, or add notes and a signature.', icon: '✎', category: 'Edit', ready: true, editor: true },
   { id: 'merge', title: 'Merge PDFs', description: 'Combine documents in the order you choose.', icon: '▤', category: 'Organize', ready: true, multi: true },
   { id: 'split', title: 'Split PDF', description: 'Save selected page ranges as separate PDFs.', icon: '⫽', category: 'Organize', ready: true },
   { id: 'extract', title: 'Extract pages', description: 'Create a new PDF from selected pages.', icon: '↗', category: 'Organize', ready: true },
@@ -81,7 +81,7 @@ function render() {
 }
 
 function renderForm(tool) {
-  if (tool.editor) return `<div class="editor-launch"><span class="editor-launch-icon">✎</span><b>Open the browser-based editor</b><p>Add text and markups, draw shapes or a signature, and download a new copy. Your file stays on your device.</p><a class="button button-primary editor-launch-button" href="/editor.html">Open PDF editor <span>→</span></a><small>Existing text editing and secure redaction are not supported by this editor yet.</small></div>`;
+  if (tool.editor) return `<div class="editor-launch"><span class="editor-launch-icon">✎</span><b>Open the browser-based editor</b><p>Click an existing text run to replace its visible wording, or add text, markups, shapes, and a signature. Your file stays on your device.</p><a class="button button-primary editor-launch-button" href="/editor.html">Open PDF editor <span>→</span></a><small>Font matching is best-effort. The original text may remain extractable; this is not secure redaction.</small></div>`;
   const accepts = tool.images ? 'image/jpeg,image/png,image/webp' : 'application/pdf,.pdf';
   const multiple = tool.multi ? 'multiple' : '';
   const files = state.files.map((file, index) => `<div class="file-row"><span class="file-type">${tool.images ? 'IMG' : 'PDF'}</span><span class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}<small>${fmtBytes(file.size)}</small></span>${tool.multi ? `<button class="move-file" data-move="${index}" aria-label="Move file up" ${index === 0 ? 'disabled' : ''}>↑</button>` : ''}<button class="remove-file" data-remove="${index}" aria-label="Remove ${escapeHtml(file.name)}">×</button></div>`).join('');

@@ -22,9 +22,9 @@ Build the deployable site with `npm run build`. Netlify is configured to publish
 - Add a text watermark
 - Add page numbers
 - Edit title, author and subject metadata
-- Add text, highlights, freehand marks, rectangles, and a drawn signature in the PDF Editor
+- Click a text run to replace its visible wording (best-effort font matching), or add text, highlights, freehand marks, rectangles, and a drawn signature in the PDF Editor
 
-The editor saves these additions as new PDF content and does not alter text already embedded in the document. Whiteout is a visual overlay, not secure redaction; original content may remain recoverable. Rotated pages and encrypted PDFs are not supported by the editor. OCR, compression, PDF-to-Office conversion, encryption and form filling are not implemented. This is not a complete replacement for every Sejda feature.
+Text replacement covers the selected text visually and adds a replacement overlay. It does not rewrite the original PDF text stream: the original wording may remain selectable or extractable, so this is not secure redaction or a confidentiality tool. Embedded fonts are reused when they can be safely re-embedded; otherwise a close standard font is used. Font, color, and spacing matches are therefore best-effort. Rotated pages and encrypted PDFs are not supported by the editor. OCR, compression, PDF-to-Office conversion, encryption and form filling are not implemented. This is not a complete replacement for every Sejda feature.
 
 ## Privacy and monetization notes
 
