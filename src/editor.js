@@ -209,11 +209,14 @@ async function openPdf(file) {
     const pdf = await loadingTask.promise;
     state.file = file; state.bytes = bytes; state.pdf = pdf; state.pageNumber = 1; state.pageCount = pdf.numPages; state.annotations = Array.from({ length: pdf.numPages }, () => []);
     $('#doc-name').textContent = file.name; $('#doc-name').title = file.name; $('#page-count').textContent = String(pdf.numPages);
-    $('#placeholder').hidden = true; pageWrap.hidden = false; $('#save-pdf').disabled = false;
+    $('#placeholder').hidden = true; $('#placeholder').style.display = 'none';
+    pageWrap.hidden = false; pageWrap.style.display = 'block'; $('#save-pdf').disabled = false;
     makePageList(); await renderPage(); setStatus(`${pdf.numPages} page${pdf.numPages === 1 ? '' : 's'} ready. All editing is local to this browser.`);
     if (pdf.numPages > 100) setStatus('Large document: rendering one page at a time. Export may use substantial browser memory.');
   } catch (error) {
     state.file = null; state.bytes = null; state.pdf = null; $('#save-pdf').disabled = true;
+    $('#placeholder').hidden = false; $('#placeholder').style.display = '';
+    pageWrap.hidden = true; pageWrap.style.display = 'none';
     setStatus(`Could not open this PDF. It may be encrypted, damaged, or unsupported. ${error?.message || ''}`.slice(0, 240), 'error');
   }
 }
