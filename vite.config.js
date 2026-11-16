@@ -11,6 +11,7 @@ export default defineConfig({
         terms: fileURLToPath(new URL('./terms.html', import.meta.url)),
         guideIndex: fileURLToPath(new URL('./guides/index.html', import.meta.url)),
         guideEditPdf: fileURLToPath(new URL('./guides/edit-pdf.html', import.meta.url)),
+        guideFillSign: fileURLToPath(new URL('./guides/fill-and-sign.html', import.meta.url)),
         guideMergePdfs: fileURLToPath(new URL('./guides/merge-pdfs.html', import.meta.url)),
         guideSplitOrganize: fileURLToPath(new URL('./guides/split-organize.html', import.meta.url)),
         guideImagesToPdf: fileURLToPath(new URL('./guides/images-to-pdf.html', import.meta.url)),

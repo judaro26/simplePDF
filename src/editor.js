@@ -10,6 +10,7 @@ const app = document.querySelector('#editor-app');
 const fontkitRegisteredDocs = new WeakSet();
 const toolHelp = {
   select: 'Click existing text to edit it in place. Use the formatting bar to style selected or newly added text.',
+  form: 'Fill supported interactive PDF fields in the panel, then download a filled copy. Scanned/printed and XFA forms need a separate form/OCR workflow.',
   text: 'Click the page to place the text from the inspector. This adds text; it does not directly rewrite existing PDF text.',
   highlight: 'Drag across an area to add a translucent highlight.',
   draw: 'Draw freehand on the page. Strokes are saved into the exported PDF.',
@@ -18,7 +19,7 @@ const toolHelp = {
   whiteout: 'Drag to cover content with a white box. This is visual-only, not secure redaction.',
   image: 'Click the page to place the selected image. Drag it to move; use the corner handle to resize.',
 };
-const state = { file: null, bytes: null, pdf: null, pageProxy: null, pageNumber: 1, pageCount: 0, mode: 'select', annotations: [], textItems: [], textStyles: {}, viewport: null, scale: 1, renderToken: 0, draft: null, selectedText: null, selectedImage: null, imageDrag: null, pendingImage: null, textStyle: { family: 'match', size: 18, bold: false, italic: false, underline: false, color: '#167c69', align: 'left' }, busy: false };
+const state = { file: null, bytes: null, pdf: null, pageProxy: null, pageNumber: 1, pageCount: 0, mode: 'select', annotations: [], textItems: [], textStyles: {}, formFields: [], formValues: {}, formDirty: new Set(), formHasXFA: false, formError: '', flattenForm: false, viewport: null, scale: 1, renderToken: 0, draft: null, selectedText: null, selectedImage: null, imageDrag: null, pendingImage: null, textStyle: { family: 'match', size: 18, bold: false, italic: false, underline: false, color: '#167c69', align: 'left' }, busy: false };
 
 app.innerHTML = `
   <header class="editor-topbar">
@@ -40,6 +41,7 @@ app.innerHTML = `
         <button class="mode-btn" data-mode="highlight" title="Highlight"><span>▰</span>Highlight</button>
         <button class="mode-btn" data-mode="draw" title="Freehand draw"><span>⌁</span>Draw</button>
         <button class="mode-btn" data-mode="signature" title="Draw a signature"><span>✍</span>Sign</button>
+        <button class="mode-btn" data-mode="form" title="Fill interactive form fields"><span>☷</span>Forms</button>
         <button class="mode-btn" id="insert-image" title="Insert an image"><span>▧</span>Images</button>
         <span class="toolbar-divider"></span>
         <button class="mode-btn" data-mode="rect" title="Rectangle"><span>□</span>Shape</button>
@@ -69,6 +71,7 @@ app.innerHTML = `
       <div class="field-pair"><div><label for="font-size">Text size (pt)</label><input id="font-size" type="number" min="6" max="96" value="18" /></div><div><label for="ink-color">Color</label><input id="ink-color" type="color" value="#167c69" /></div></div>
       <label for="stroke-size">Stroke size</label><input id="stroke-size" type="number" min="1" max="18" value="3" /></div>
       <div id="replace-controls" hidden><div class="selected-text-label">Selected PDF text</div><div id="selected-original" class="selected-original"></div><label for="replacement-text">Text (you can also edit directly on the page)</label><textarea id="replacement-text" placeholder="Enter replacement text"></textarea><div class="match-note" id="match-note"></div><button class="editor-btn primary apply-replacement" id="apply-replacement">Apply / finish editing</button><button class="editor-btn cancel-replacement" id="cancel-replacement">Cancel</button></div>
+      <div id="form-panel" hidden><div class="selected-text-label">Interactive PDF fields</div><p class="form-summary" id="form-summary">Open a PDF to inspect its fields.</p><div class="form-fields" id="form-fields"></div><label class="flatten-option"><input id="flatten-form" type="checkbox" /> Flatten fields in downloaded copy</label><p class="form-footnote">Form edits are written to the downloaded copy; the page preview may not show them until you reopen that copy. The original PDF is unchanged. Drawn signatures are annotations, not cryptographic digital signatures.</p></div>
       <div class="warning-box"><b>Whiteout is not redaction</b>It only covers the visible page. Underlying text and data may still be recoverable. Do not use it to remove confidential information.</div>
       <div class="warning-box"><b>Text replacement limitation</b>Replacement covers the visible text and adds a new overlay. The original embedded text may remain selectable or extractable, so this is not secure redaction or a true content-stream rewrite.</div>
     </aside>
@@ -116,6 +119,7 @@ $('#text-align').addEventListener('change', () => updateTextStyle({ align: $('#t
 $('#format-bold').addEventListener('click', () => updateTextStyle({ bold: !state.textStyle.bold }));
 $('#format-italic').addEventListener('click', () => updateTextStyle({ italic: !state.textStyle.italic }));
 $('#format-underline').addEventListener('click', () => updateTextStyle({ underline: !state.textStyle.underline }));
+$('#flatten-form').addEventListener('change', () => { state.flattenForm = $('#flatten-form').checked; });
 
 function setMode(mode) {
   if (mode !== 'select' && state.selectedText) clearTextSelection();
@@ -125,6 +129,85 @@ function setMode(mode) {
   pageWrap.classList.toggle('text-select-mode', mode === 'select');
   $('#insert-image').classList.toggle('active', mode === 'image');
   $('#tool-description').textContent = toolHelp[mode];
+  const formMode = mode === 'form';
+  $('#form-panel').hidden = !formMode;
+  if (formMode) { $('#new-text-controls').hidden = true; $('#replace-controls').hidden = true; renderFormFields(); }
+  else if (!state.selectedText) { $('#form-panel').hidden = true; $('#new-text-controls').hidden = false; $('#replace-controls').hidden = true; }
+}
+
+async function inspectFormFields(bytes) {
+  try {
+    const document = await PDFDocument.load(bytes, { updateMetadata: false });
+    const form = document.getForm(); const hasXFA = form.hasXFA();
+    const fields = form.getFields().map((field) => {
+      const type = field.constructor.name; const name = field.getName();
+      const descriptor = { name, type, required: field.isRequired?.() || false, readOnly: field.isReadOnly?.() || false, options: [], multiline: false, multiple: false, value: '' };
+      try {
+        if (type === 'PDFTextField') { descriptor.value = field.getText() ?? ''; descriptor.multiline = field.isMultiline(); }
+        else if (type === 'PDFCheckBox') descriptor.value = field.isChecked();
+        else if (type === 'PDFDropdown' || type === 'PDFOptionList') { descriptor.options = field.getOptions(); descriptor.value = field.getSelected(); descriptor.multiple = field.isMultiselect?.() || false; }
+        else if (type === 'PDFRadioGroup') { descriptor.options = field.getOptions(); descriptor.value = field.getSelected() || ''; }
+      } catch (error) { descriptor.error = error.message; }
+      return descriptor;
+    });
+    return { fields, hasXFA, error: '' };
+  } catch (error) { return { fields: [], hasXFA: false, error: error.message }; }
+}
+
+function renderFormFields() {
+  const container = $('#form-fields'); container.replaceChildren();
+  if (!state.file) { $('#form-summary').textContent = 'Open a PDF to inspect its form fields.'; return; }
+  if (state.formError) { $('#form-summary').textContent = `Form fields could not be inspected: ${state.formError}`; return; }
+  const supported = state.formFields.filter((field) => ['PDFTextField', 'PDFCheckBox', 'PDFDropdown', 'PDFOptionList', 'PDFRadioGroup'].includes(field.type));
+  const unsupported = state.formFields.length - supported.length;
+  if (!supported.length) {
+    $('#form-summary').textContent = state.formHasXFA ? 'This PDF uses XFA forms, which are not supported yet.' : 'No supported interactive form fields were found. Scans or printed forms need OCR or manual text annotations.';
+    return;
+  }
+  $('#form-summary').textContent = `${supported.length} interactive field${supported.length === 1 ? '' : 's'} found.${unsupported ? ` ${unsupported} other field${unsupported === 1 ? '' : 's'} not supported.` : ''}`;
+  if (state.formHasXFA) { const warning = document.createElement('p'); warning.className = 'form-footnote'; warning.textContent = 'This PDF also contains XFA data. XFA-specific scripts/layout may not update; review the downloaded form carefully.'; container.append(warning); }
+  for (const field of supported) {
+    const group = document.createElement('div'); group.className = 'form-field-group';
+    const label = document.createElement('label'); label.className = 'form-field-label'; label.textContent = field.name;
+    if (field.required) { const required = document.createElement('span'); required.className = 'required-mark'; required.textContent = ' required'; label.append(required); }
+    group.append(label);
+    let control;
+    if (field.type === 'PDFTextField') {
+      control = field.multiline ? document.createElement('textarea') : document.createElement('input');
+      if (!field.multiline) control.type = 'text'; control.value = state.formValues[field.name] ?? field.value ?? '';
+    } else if (field.type === 'PDFCheckBox') {
+      control = document.createElement('input'); control.type = 'checkbox'; control.checked = Boolean(state.formValues[field.name] ?? field.value); control.className = 'form-checkbox';
+    } else if (field.type === 'PDFRadioGroup') {
+      const radios = document.createElement('div'); radios.className = 'form-radio-list';
+      for (const option of field.options) {
+        const optionLabel = document.createElement('label'); optionLabel.className = 'form-radio-option';
+        const radio = document.createElement('input'); radio.type = 'radio'; radio.name = `field-${field.name}`; radio.value = option; radio.checked = (state.formValues[field.name] ?? field.value) === option; radio.disabled = field.readOnly || Boolean(field.error);
+        radio.addEventListener('change', () => { if (radio.checked) { state.formValues[field.name] = radio.value; state.formDirty.add(field.name); } });
+        optionLabel.append(radio, document.createTextNode(option)); radios.append(optionLabel);
+      }
+      control = radios;
+    } else {
+      control = document.createElement('select'); control.multiple = field.multiple;
+      if (!field.multiple) { const blank = document.createElement('option'); blank.value = ''; blank.textContent = 'Choose an option'; control.append(blank); }
+      for (const option of field.options) { const node = document.createElement('option'); node.value = option; node.textContent = option; control.append(node); }
+      const selected = state.formValues[field.name] ?? field.value ?? [];
+      [...control.options].forEach((option) => { option.selected = Array.isArray(selected) ? selected.includes(option.value) : option.value === selected; });
+    }
+    if (field.type !== 'PDFRadioGroup') {
+      control.classList.add('form-field-control'); control.disabled = field.readOnly || Boolean(field.error);
+      const eventName = field.type === 'PDFTextField' ? 'input' : 'change';
+      control.addEventListener(eventName, () => {
+        if (field.type === 'PDFCheckBox') state.formValues[field.name] = control.checked;
+        else if (field.type === 'PDFOptionList' && control.multiple) state.formValues[field.name] = [...control.selectedOptions].map((option) => option.value);
+        else if (field.type === 'PDFDropdown' || field.type === 'PDFOptionList') state.formValues[field.name] = control.value ? [control.value] : [];
+        else state.formValues[field.name] = control.value;
+        state.formDirty.add(field.name);
+      });
+      group.append(control);
+    } else group.append(control);
+    if (field.error) { const note = document.createElement('small'); note.className = 'form-field-error'; note.textContent = `Could not read current value: ${field.error}`; group.append(note); }
+    container.append(group);
+  }
 }
 
 async function loadImageForPlacement(file) {
@@ -207,7 +290,9 @@ async function openPdf(file) {
     const bytes = await file.arrayBuffer();
     const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes.slice(0)), standardFontDataUrl: new URL('/standard_fonts/', window.location.href).href });
     const pdf = await loadingTask.promise;
+    const formInfo = await inspectFormFields(bytes);
     state.file = file; state.bytes = bytes; state.pdf = pdf; state.pageNumber = 1; state.pageCount = pdf.numPages; state.annotations = Array.from({ length: pdf.numPages }, () => []);
+    state.formFields = formInfo.fields; state.formHasXFA = formInfo.hasXFA; state.formError = formInfo.error; state.formValues = Object.fromEntries(formInfo.fields.map((field) => [field.name, field.value])); state.formDirty = new Set(); state.flattenForm = false; $('#flatten-form').checked = false; renderFormFields(); $('#form-panel').hidden = state.mode !== 'form';
     $('#doc-name').textContent = file.name; $('#doc-name').title = file.name; $('#page-count').textContent = String(pdf.numPages);
     $('#placeholder').hidden = true; $('#placeholder').style.display = 'none';
     pageWrap.hidden = false; pageWrap.style.display = 'block'; $('#save-pdf').disabled = false;
@@ -248,6 +333,7 @@ async function renderPage() {
   state.pageProxy = page;
   state.selectedText = null;
   $('#replace-controls').hidden = true; $('#new-text-controls').hidden = false; $('#inline-text-editor').hidden = true; $('#finish-text-edit').hidden = true; state.selectedImage = null;
+  $('#form-panel').hidden = state.mode !== 'form';
   const unitViewport = page.getViewport({ scale: 1 });
   const availableWidth = Math.max(240, $('#canvas-scroll').clientWidth - 54);
   state.scale = Math.min(1.65, availableWidth / unitViewport.width);
@@ -475,7 +561,7 @@ function applyReplacement() {
 }
 
 overlayCanvas.addEventListener('pointerdown', (event) => {
-  if (!state.pdf) return;
+  if (!state.pdf || state.mode === 'form') return;
   const point = pointFromEvent(event);
   if (state.mode === 'select') {
     if (state.selectedText) clearTextSelection();
@@ -554,6 +640,19 @@ async function exportPdf() {
   try {
     const pdf = await PDFDocument.load(state.bytes, { updateMetadata: false });
     const fontCache = new Map(); const imageCache = new Map();
+    if (state.formDirty.size || state.flattenForm) {
+      const form = pdf.getForm();
+      for (const name of state.formDirty) {
+        const field = state.formFields.find((candidate) => candidate.name === name); if (!field) continue;
+        const value = state.formValues[name];
+        if (field.type === 'PDFTextField') form.getTextField(name).setText(String(value ?? ''));
+        else if (field.type === 'PDFCheckBox') value ? form.getCheckBox(name).check() : form.getCheckBox(name).uncheck();
+        else if (field.type === 'PDFDropdown') { const target = Array.isArray(value) ? value[0] : value; target ? form.getDropdown(name).select(target) : form.getDropdown(name).clear(); }
+        else if (field.type === 'PDFOptionList') { const selected = Array.isArray(value) ? value : value ? [value] : []; selected.length ? form.getOptionList(name).select(selected) : form.getOptionList(name).clear(); }
+        else if (field.type === 'PDFRadioGroup') value ? form.getRadioGroup(name).select(value) : form.getRadioGroup(name).clear();
+      }
+      if (state.flattenForm) form.flatten(); else form.updateFieldAppearances();
+    }
     for (let index = 0; index < state.annotations.length; index++) {
       const items = state.annotations[index]; if (!items.length) continue;
       const page = pdf.getPage(index); const rotation = page.getRotation().angle % 360;

@@ -26,9 +26,10 @@ Original walkthroughs live under `guides/` and are published at `/guides/`. `pri
 - Add a text watermark
 - Add page numbers
 - Edit title, author and subject metadata
+- Fill standard interactive AcroForm text fields, checkboxes, dropdowns, option lists, and radio groups; optionally flatten the output
 - Click a text run and edit directly on the page, with font family, size, bold, italic, underline, color, and alignment controls; insert, move, and resize JPG/PNG/WebP images; add highlights, freehand marks, rectangles, and a drawn signature
 
-Text editing covers the selected text visually and adds replacement text. It does not rewrite the original PDF text stream: the original wording may remain selectable or extractable, so this is not secure redaction or a confidentiality tool. Embedded fonts are reused when they can be safely re-embedded; otherwise a close standard font is used. Font, color, and spacing matches are therefore best-effort. Images are embedded locally and can be positioned/resized. Rotated pages and encrypted PDFs are not supported by the editor. OCR, compression, PDF-to-Office conversion, encryption and form filling are not implemented. This is not a complete replacement for every Sejda feature.
+Text editing covers the selected text visually and adds replacement text. It does not rewrite the original PDF text stream: the original wording may remain selectable or extractable, so this is not secure redaction or a confidentiality tool. Embedded fonts are reused when they can be safely re-embedded; otherwise a close standard font is used. Font, color, and spacing matches are therefore best-effort. Images are embedded locally and can be positioned/resized. Form filling supports standard AcroForm fields; XFA, scanned/printed forms, and cryptographic digital signatures are not supported. Rotated pages and encrypted PDFs are not supported by the editor. OCR, compression, PDF-to-Office conversion, encryption, and creating new fillable form fields are not implemented. This is not a complete replacement for every Sejda feature.
 
 ## Privacy and monetization notes
 
