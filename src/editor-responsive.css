@@ -1,4 +1,4 @@
-.editor-options-toggle{display:none}
+.editor-options-toggle{display:none}[hidden]{display:none!important}
 .ad-rail{display:none}
 .ad-rail-label{font-size:8px;letter-spacing:1px;color:#96a59f;text-align:center}.ad-rail-card{width:100%;height:min(600px,calc(100vh - 140px));min-height:270px;border:1px dashed #d4e0da;border-radius:8px;background:#f8fbf9;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:13px;color:#86958f}.ad-rail-icon{width:27px;height:27px;border:1px solid #dce7e1;border-radius:7px;display:grid;place-items:center;font-size:8px;font-weight:800;letter-spacing:.4px;color:#7d9188;background:#fff}.ad-rail-card b{font-size:10px;color:#536960;margin-top:10px}.ad-rail-card p{font-size:9px;line-height:1.5;margin:7px 0;color:#899891}.ad-rail-card small{font-size:8px;color:#a0aca7}
 @media(min-width:1360px){.editor-shell{grid-template-columns:190px minmax(0,1fr) 230px 160px}.ad-rail{display:flex;flex-direction:column;align-items:center;gap:10px;overflow:auto;padding:16px 10px;border-left:1px solid #e0e9e4;background:#f8faf9}}
