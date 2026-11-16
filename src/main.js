@@ -59,7 +59,7 @@ function render() {
         </div>
       </section>
 
-      <section class="ad-wrap wrap" aria-label="Advertisement"><div class="ad-slot"><span class="ad-label">ADVERTISEMENT</span><span class="ad-copy">A quiet space for a privacy-respecting sponsor.</span><span class="ad-tag">Ad spot</span></div></section>
+      <section class="ad-wrap wrap" aria-label="Advertisement"><div class="ad-slot" data-ad-provider="adsense" data-ad-slot="home-leaderboard" data-ad-state="placeholder"><span class="ad-label">ADVERTISEMENT</span><span class="ad-copy">AdSense leaderboard placement · not live yet</span><span class="ad-tag">Ad spot</span></div></section>
 
       <section class="workspace wrap" id="workspace">
         <div class="section-head"><div><div class="eyebrow">THE PDF TOOLKIT</div><h2>What do you need to do?</h2><p>Choose a tool. Supported processing stays in this browser tab.</p></div><div class="search-box"><span>⌕</span><input id="tool-search" type="search" placeholder="Find a tool" value="${escapeHtml(state.query)}" aria-label="Find a tool" /></div></div>

@@ -72,6 +72,10 @@ app.innerHTML = `
       <div class="warning-box"><b>Whiteout is not redaction</b>It only covers the visible page. Underlying text and data may still be recoverable. Do not use it to remove confidential information.</div>
       <div class="warning-box"><b>Text replacement limitation</b>Replacement covers the visible text and adds a new overlay. The original embedded text may remain selectable or extractable, so this is not secure redaction or a true content-stream rewrite.</div>
     </aside>
+    <aside class="ad-rail" aria-label="Advertisement" data-ad-provider="adsense" data-ad-slot="editor-skyscraper" data-ad-state="placeholder">
+      <span class="ad-rail-label">ADVERTISEMENT</span>
+      <div class="ad-rail-card"><span class="ad-rail-icon">AD</span><b>Sponsored space</b><p>A reserved placement for an advertiser.</p><small>AdSense is not active yet.</small></div>
+    </aside>
   </div>`;
 
 const $ = (selector) => document.querySelector(selector);

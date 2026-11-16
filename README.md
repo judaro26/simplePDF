@@ -29,8 +29,8 @@ Text editing covers the selected text visually and adds replacement text. It doe
 ## Privacy and monetization notes
 
 - The app does not send selected file bytes to a server. Files are held in memory for the current browser session and generated downloads are created locally.
-- No analytics, cookie banner, account system, serverless upload function, or ad network is configured.
-- The ad area is a placeholder. Before adding an ad vendor, review what it collects (including IP address, device identifiers and browsing activity), update the privacy notice and consent controls as legally required, and verify the vendor's behavior.
+- No analytics, account system, serverless upload function, or ad network is configured. The site contains labeled AdSense placement placeholders only; they do not load third-party scripts or generate revenue yet.
+- Activating AdSense requires an approved publisher account, your publisher/client ID and ad-unit IDs, a verified domain, and any consent-management disclosures or controls required for your audience. Review what Google and any CMP collect, update the privacy notice, and verify the live requests before enabling scripts. Never encourage users to click ads.
 - Netlify, DNS providers, and other infrastructure providers may process request metadata such as IP addresses. Browser-only document processing does not mean the hosting site collects no data whatsoever.
 - Do not market this as legally risk-free or promise immunity from lawsuits. Have qualified counsel review terms, privacy disclosures, intellectual-property issues, security headers, and applicable laws before launch.
 
