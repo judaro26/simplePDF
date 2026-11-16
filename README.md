@@ -1,6 +1,6 @@
-# ClearPDF
+# SimplexPDF
 
-A privacy-first, static PDF tools starter intended for Netlify. Supported file operations run in the visitor's browser; there is no server-side file processing, account system, database, analytics, or ad-network integration in this version.
+A privacy-first, static PDF tools site for SimplexPDF, intended for Netlify. Supported file operations run in the visitor's browser; there is no server-side file processing, account system, database, analytics, or ad-network integration in this version.
 
 ## Run locally
 
@@ -10,6 +10,10 @@ npm run dev
 ```
 
 Build the deployable site with `npm run build`. Netlify is configured to publish `dist/` using `npm run build`.
+
+## Guides and disclosures
+
+Original walkthroughs live under `guides/` and are published at `/guides/`. `privacy.html` and `terms.html` are product-specific draft disclosures. Complete the operator name/address, contact, effective date, hosting-provider details, children/audience statement, and jurisdiction with qualified counsel before public launch.
 
 ## Supported tools
 

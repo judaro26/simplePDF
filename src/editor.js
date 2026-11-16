@@ -22,7 +22,7 @@ const state = { file: null, bytes: null, pdf: null, pageProxy: null, pageNumber:
 
 app.innerHTML = `
   <header class="editor-topbar">
-    <a class="editor-brand" href="/"><span class="brand-mark">C</span> ClearPDF <small>Editor</small></a>
+    <a class="editor-brand" href="/"><span class="brand-mark">S</span> SimplexPDF <small>Editor</small></a>
     <span class="editor-doc-name" id="doc-name">No document loaded</span>
     <div class="editor-head-actions">
       <input type="file" id="pdf-input" accept="application/pdf,.pdf" hidden />
@@ -594,7 +594,7 @@ async function exportPdf() {
       }
     }
     const bytes = await pdf.save(); const blob = new Blob([bytes], { type: 'application/pdf' }); const url = URL.createObjectURL(blob); const link = document.createElement('a');
-    link.href = url; link.download = `${state.file.name.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]/g, '_')}-edited.pdf`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60_000); setStatus('PDF downloaded. The original file was not changed.', 'success');
+    link.href = url; link.download = `${state.file.name.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]/g, '_')}-simplexpdf-edited.pdf`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60_000); setStatus('PDF downloaded. The original file was not changed.', 'success');
   } catch (error) { setStatus(error.message || 'Could not save the edited PDF.', 'error'); }
   finally { state.busy = false; $('#save-pdf').disabled = false; $('#save-pdf').textContent = 'Download PDF'; }
 }

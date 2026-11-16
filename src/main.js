@@ -2,6 +2,7 @@ import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import JSZip from 'jszip';
 import './style.css';
 import './panel.css';
+import '../guides.css';
 
 const tools = [
   { id: 'editor', title: 'PDF Editor', description: 'Edit text in place, add images, notes, shapes, and signatures.', icon: '✎', category: 'Edit', ready: true, editor: true },
@@ -37,8 +38,8 @@ function render() {
   const visibleTools = tools.filter((tool) => `${tool.title} ${tool.category} ${tool.description}`.toLowerCase().includes(filter));
   app.innerHTML = `
     <header class="topbar">
-      <a class="brand" href="#home" aria-label="ClearPDF home"><span class="brand-mark">C</span><span>clear<span class="brand-accent">pdf</span></span></a>
-      <nav class="topnav" aria-label="Main navigation"><a href="#tools">All tools</a><a href="#privacy">Privacy</a><a class="nav-cta" href="#workspace">Open a tool <span>↗</span></a></nav>
+      <a class="brand" href="#home" aria-label="simplexpdf home"><span class="brand-mark">S</span><span>simplex<span class="brand-accent">pdf</span></span></a>
+      <nav class="topnav" aria-label="Main navigation"><a href="#tools">All tools</a><a href="/guides/">Guides</a><a href="#privacy">Privacy</a><a class="nav-cta" href="#workspace">Open a tool <span>↗</span></a></nav>
       <button class="mobile-menu" aria-label="Open tools" id="mobile-menu">☰</button>
     </header>
 
@@ -72,10 +73,12 @@ function render() {
         </div>
       </section>
 
-      <section class="privacy-section" id="privacy"><div class="wrap privacy-grid"><div><div class="eyebrow">A DIFFERENT KIND OF PDF TOOL</div><h2>Privacy isn’t a setting.<br /><span>It’s the starting point.</span></h2><p>Most online PDF tools upload files to a server for processing. ClearPDF is designed to handle supported tasks locally in your browser instead.</p><a class="text-link" href="#privacy-details">How we handle your files <span>→</span></a></div><div class="privacy-points" id="privacy-details"><article><span class="point-icon">⌑</span><div><b>Your file stays on your device</b><p>Supported operations run in your browser. The app does not send document contents to a ClearPDF backend.</p></div></article><article><span class="point-icon">⟲</span><div><b>No file archive</b><p>This app creates no account or server-side document history. Reloading clears the working session. Your browser and hosting provider may retain ordinary local or request data.</p></div></article><article><span class="point-icon">◎</span><div><b>Ads are separate</b><p>No ad or analytics scripts are active in this version. Hosting providers may log connection metadata. A future ad provider may collect device or usage data.</p></div></article></div></div></section>
+      <section class="guides-section wrap" id="guides"><div class="eyebrow">HELPFUL HOW-TOs</div><h2>Get more from your PDFs</h2><p class="guides-intro">Practical walkthroughs for the tools SimplexPDF supports today, plus honest notes about what each one changes.</p><div class="guide-cards"><a href="/guides/edit-pdf.html"><b>Edit and annotate a PDF</b><span>Replace visible text, add styled notes, and place images.</span><i>Read guide →</i></a><a href="/guides/merge-pdfs.html"><b>Merge PDF files</b><span>Combine documents and control their order.</span><i>Read guide →</i></a><a href="/guides/split-organize.html"><b>Split and organize pages</b><span>Extract, remove, rotate, and export selected pages.</span><i>Read guide →</i></a><a href="/guides/images-to-pdf.html"><b>Convert images to PDF</b><span>Make a PDF from JPG, PNG, or WebP images.</span><i>Read guide →</i></a><a href="/guides/watermarks-and-numbers.html"><b>Add a watermark or page numbers</b><span>Apply page labels and visible text stamps.</span><i>Read guide →</i></a><a href="/guides/privacy-and-files.html"><b>How files are handled</b><span>Understand browser processing, hosting logs, and ad slots.</span><i>Read guide →</i></a></div><a class="text-link guides-all" href="/guides/">Browse all guides <span>→</span></a></section>
+
+      <section class="privacy-section" id="privacy"><div class="wrap privacy-grid"><div><div class="eyebrow">A DIFFERENT KIND OF PDF TOOL</div><h2>Privacy isn’t a setting.<br /><span>It’s the starting point.</span></h2><p>SimplexPDF runs supported PDF tasks in your browser. We don’t operate an application server for document uploads.</p><a class="text-link" href="/privacy.html">Read the privacy notice <span>→</span></a></div><div class="privacy-points" id="privacy-details"><article><span class="point-icon">⌑</span><div><b>Supported files stay in your browser</b><p>Selected documents are processed locally and downloaded from the browser. We do not send document contents to a SimplexPDF backend.</p></div></article><article><span class="point-icon">⟲</span><div><b>No account or file archive</b><p>This version creates no account or server-side document history. Browser memory, downloads, backups, and extensions remain under your device’s control.</p></div></article><article><span class="point-icon">◎</span><div><b>Ad slots are not active yet</b><p>The reserved placements do not load an ad network. If advertising is enabled, third-party data practices will be disclosed before activation.</p></div></article></div></div></section>
       <section class="more-section wrap"><div class="more-copy"><div class="eyebrow">MORE TO COME</div><h2>Useful tools.<br />No unnecessary extras.</h2><p>OCR, conversion, compression and advanced editing need additional engines. We’ll only add them when they can meet the same clear privacy standard.</p></div><div class="more-chips"><span>PDF to Word</span><span>OCR scans</span><span>Compress PDF</span><span>Fill & sign</span><span>Password protect</span><span>PDF to images</span><span>Crop pages</span><span>PDF to Excel</span></div></section>
     </main>
-    <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="#home"><span class="brand-mark">C</span><span>clear<span class="brand-accent">pdf</span></span></a><span>PDF tools that keep your documents on your device.</span><div><a href="privacy.html">Privacy notice</a><a href="terms.html">Terms</a></div></div><div class="wrap footer-small">© ${new Date().getFullYear()} ClearPDF. Independent project; not affiliated with Sejda. This website is provided “as is” and is not legal, financial or professional advice.</div></footer>
+    <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="#home"><span class="brand-mark">S</span><span>simplex<span class="brand-accent">pdf</span></span></a><span>Private PDF tools and practical guides.</span><div><a href="/guides/">Guides</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="wrap footer-small">© ${new Date().getFullYear()} SimplexPDF. Independent project; not affiliated with Sejda. This website is provided “as is” and is not legal, financial or professional advice.</div></footer>
   `;
   bindEvents();
 }
@@ -172,7 +175,7 @@ function triggerDownload(blob, filename) {
 async function savePdf(doc, sourceName) {
   const bytes = await doc.save();
   const base = sourceName.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]/g, '_');
-  triggerDownload(new Blob([bytes], { type: 'application/pdf' }), `${base}-clearpdf.pdf`);
+  triggerDownload(new Blob([bytes], { type: 'application/pdf' }), `${base}-simplexpdf.pdf`);
 }
 
 async function runTool() {
