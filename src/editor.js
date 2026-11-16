@@ -168,7 +168,9 @@ function updateTextStyle(patch) {
   state.textStyle = { ...state.textStyle, ...patch };
   if (state.selectedText) {
     const annotation = state.selectedText.annotation;
+    if (Object.entries(patch).some(([key, value]) => annotation[key] !== value)) state.selectedText.styleDirty = true;
     Object.assign(annotation, state.textStyle, { fontChoice: state.textStyle.family, fontFamily: state.textStyle.family === 'match' ? state.selectedText.fontFamily : state.textStyle.family });
+    state.selectedText.dirty = Boolean(state.selectedText.styleDirty || annotation.text !== state.selectedText.baselineText);
   }
   syncFormatControls();
   if (state.selectedText) { updateInlineEditorStyle(); paintOverlay(); }
@@ -177,8 +179,9 @@ function updateTextStyle(patch) {
 
 function updateInlineText() {
   if (!state.selectedText) return;
-  const selected = state.selectedText; const annotation = selected.annotation; const text = $('#inline-textarea').value;
+  const selected = state.selectedText; const annotation = selected.annotation; const text = String($('#inline-textarea').value ?? '');
   annotation.text = text; $('#replacement-text').value = text;
+  selected.dirty = Boolean(selected.styleDirty || text !== selected.baselineText);
   const rect = baseCanvas.getBoundingClientRect(); const ctx = overlayCanvas.getContext('2d');
   const family = annotation.fontChoice && annotation.fontChoice !== 'match' ? annotation.fontChoice : annotation.fontFamily || 'Arial, sans-serif';
   ctx.font = `${annotation.italic ? 'italic ' : ''}${annotation.bold ? '700 ' : ''}${annotation.size * state.scale}px ${family}`;
@@ -233,6 +236,7 @@ async function goToPage(pageNumber) {
 
 async function renderPage() {
   const token = ++state.renderToken;
+  if (state.selectedText) clearTextSelection();
   const page = await state.pdf.getPage(state.pageNumber);
   state.pageProxy = page;
   state.selectedText = null;
@@ -297,9 +301,9 @@ function paintItem(ctx, item, width, height, draft) {
     const fontSize = item.size * state.scale; const family = item.fontChoice && item.fontChoice !== 'match' ? item.fontChoice : item.fontFamily || 'Arial, sans-serif';
     const style = [item.italic ? 'italic' : '', item.bold ? '700' : '', `${fontSize}px`, family].filter(Boolean).join(' ');
     ctx.fillStyle = color; ctx.font = style; ctx.textBaseline = 'top'; ctx.textAlign = item.align || 'left';
-    const measured = Math.max(1, ctx.measureText(item.text).width); const fit = Math.min(1, Math.max(.55, (w - 1) / measured));
+    const text = String(item.text ?? ''); const measured = Math.max(1, ctx.measureText(text).width); const fit = Math.min(1, Math.max(.55, (w - 1) / measured));
     const textX = item.align === 'center' ? x + w / 2 : item.align === 'right' ? x + w : x;
-    ctx.save(); ctx.translate(textX, y); ctx.scale(fit, 1); ctx.fillText(item.text, 0, 0); ctx.restore();
+    ctx.save(); ctx.translate(textX, y); ctx.scale(fit, 1); ctx.fillText(text, 0, 0); ctx.restore();
     if (item.underline) { const lineX = item.align === 'center' ? x + (w - measured * fit) / 2 : item.align === 'right' ? x + w - measured * fit : x; ctx.fillRect(lineX, y + fontSize, measured * fit, Math.max(1, state.scale)); }
   }
   else if (item.type === 'highlight') { ctx.fillStyle = `${color}55`; ctx.fillRect(x, y, w, h); }
@@ -395,9 +399,10 @@ function selectExistingText(event) {
   const sourceH = Math.min(1, rect.height / canvasRect.height + padY * 2);
   const annotations = pageAnnotations();
   const previousAnnotation = annotations.find((annotation) => annotation.type === 'text-replacement' && annotation.sourceIndex === index);
-  const previousSnapshot = previousAnnotation ? { ...previousAnnotation } : null;
+  const previousSnapshot = previousAnnotation ? { ...previousAnnotation, text: previousAnnotation.text ?? item.str } : null;
+  if (previousAnnotation && previousAnnotation.text == null) previousAnnotation.text = item.str;
   const replacement = previousAnnotation || {
-    type: 'text-replacement',
+    type: 'text-replacement', text: item.str,
     pageNumber: state.pageNumber, sourceIndex: index, original: item.str,
     x: sourceX, y: sourceY, w: sourceW, baseW: sourceW, h: sourceH,
     size: fontSize, color, background: sampleBackgroundColor(span), fontFamily, originalFontFamily: fontFamily,
@@ -411,20 +416,21 @@ function selectExistingText(event) {
   replacement.x = sourceX; replacement.y = sourceY; replacement.w = Math.max(sourceW, replacement.w); replacement.baseW = sourceW; replacement.h = sourceH;
   if (!previousAnnotation) annotations.push(replacement);
   state.selectedImage = null;
-  state.selectedText = { ...replacement, pageNumber: state.pageNumber, sourceIndex: index, fontFamily, annotation: replacement, previousSnapshot };
+  const baselineText = replacement.text ?? item.str;
+  state.selectedText = { ...replacement, pageNumber: state.pageNumber, sourceIndex: index, fontFamily, annotation: replacement, previousSnapshot, baselineText, dirty: false, styleDirty: false };
   state.textStyle = { family: replacement.fontChoice || 'match', size: replacement.size, bold: replacement.bold, italic: replacement.italic, underline: replacement.underline, color: replacement.color, align: replacement.align || 'left' };
   $('#selected-original').textContent = item.str;
-  $('#replacement-text').value = replacement.text || item.str;
+  $('#replacement-text').value = baselineText;
   $('#match-note').textContent = `Detected about ${fontSize.toFixed(1)} pt · ${fontFamily}${state.selectedText.bold ? ' · bold' : ''}${state.selectedText.italic ? ' · italic' : ''} · color sampled from the page. A best-effort match will be used.`;
   $('#new-text-controls').hidden = true; $('#replace-controls').hidden = false;
-  $('#inline-textarea').value = replacement.text || item.str; $('#inline-text-editor').hidden = false; $('#finish-text-edit').hidden = false;
+  $('#inline-textarea').value = baselineText; $('#inline-text-editor').hidden = false; $('#finish-text-edit').hidden = false;
   syncFormatControls(state.textStyle); updateInlineEditorStyle(); paintOverlay();
   $('#inline-textarea').focus(); $('#inline-textarea').select(); setStatus('Edit this text directly on the page. Press Done or ⌘/Ctrl+Enter to finish.');
 }
 
 function clearTextSelection(cancel = false) {
   const selected = state.selectedText;
-  if (selected && cancel) {
+  if (selected && (cancel || !selected.dirty)) {
     const annotations = pageAnnotations(selected.pageNumber);
     if (selected.previousSnapshot) Object.assign(selected.annotation, selected.previousSnapshot);
     else { const index = annotations.indexOf(selected.annotation); if (index >= 0) annotations.splice(index, 1); }
@@ -444,7 +450,7 @@ function startInlineText(point) {
     bold: style.bold, italic: style.italic, underline: style.underline, align: style.align, background: 'transparent',
   };
   pageAnnotations().push(annotation);
-  state.selectedText = { pageNumber: state.pageNumber, sourceIndex: null, original: '', x: annotation.x, y: annotation.y, w: annotation.w, h: annotation.h, fontFamily: face, annotation, previousSnapshot: null, isNew: true };
+  state.selectedText = { pageNumber: state.pageNumber, sourceIndex: null, original: '', x: annotation.x, y: annotation.y, w: annotation.w, h: annotation.h, fontFamily: face, annotation, previousSnapshot: null, baselineText: '', dirty: false, styleDirty: false, isNew: true };
   $('#selected-original').textContent = 'New text'; $('#replacement-text').value = '';
   $('#match-note').textContent = 'Type directly on the page. Use the formatting bar to adjust the new text.';
   $('#new-text-controls').hidden = true; $('#replace-controls').hidden = false;
@@ -457,8 +463,8 @@ function applyReplacement() {
   if (!state.selectedText) return;
   updateInlineText();
   if (!state.selectedText.annotation.text.trim()) { setStatus('Replacement text cannot be empty.', 'error'); return; }
-  const isNew = state.selectedText.isNew; clearTextSelection();
-  setStatus(isNew ? 'Text added. Download the PDF to save.' : 'Text edit applied. The original text remains in the PDF’s underlying text data.', 'success');
+  const isNew = state.selectedText.isNew; const changed = state.selectedText.dirty; clearTextSelection();
+  setStatus(!changed ? 'No text changes to apply.' : isNew ? 'Text added. Download the PDF to save.' : 'Text edit applied. The original text remains in the PDF’s underlying text data.', 'success');
 }
 
 overlayCanvas.addEventListener('pointerdown', (event) => {
@@ -557,13 +563,13 @@ async function exportPdf() {
         } else if (item.type === 'text-replacement') {
           const width = item.w * pageW; const height = item.h * pageH; const y = crop.y + pageH - (item.y + item.h) * pageH;
           page.drawRectangle({ x, y, width, height, color: item.background ? colorRgb(item.background) : rgb(1, 1, 1), borderWidth: 0 });
-          const font = await matchingPdfFont(pdf, item, fontCache); const padding = Math.min(1.5, width * .015);
+          const text = String(item.text ?? ''); const font = await matchingPdfFont(pdf, item, fontCache); const padding = Math.min(1.5, width * .015);
           const availableWidth = Math.max(1, width - padding * 2); let fontSize = item.size;
-          const naturalWidth = font.widthOfTextAtSize(item.text, fontSize);
+          const naturalWidth = font.widthOfTextAtSize(text, fontSize);
           if (naturalWidth > availableWidth && naturalWidth > 0) fontSize = Math.max(4, fontSize * availableWidth / naturalWidth);
-          const fitWidth = font.widthOfTextAtSize(item.text, fontSize); const textX = x + padding + (item.align === 'center' ? Math.max(0, (availableWidth - fitWidth) / 2) : item.align === 'right' ? Math.max(0, availableWidth - fitWidth) : 0);
+          const fitWidth = font.widthOfTextAtSize(text, fontSize); const textX = x + padding + (item.align === 'center' ? Math.max(0, (availableWidth - fitWidth) / 2) : item.align === 'right' ? Math.max(0, availableWidth - fitWidth) : 0);
           const textHeight = font.heightAtSize(fontSize); const baseline = y + Math.max(0, (height - textHeight) / 2 + fontSize * .1);
-          page.drawText(item.text, { x: textX, y: baseline, size: fontSize, font, color });
+          page.drawText(text, { x: textX, y: baseline, size: fontSize, font, color });
           if (item.underline) page.drawLine({ start: { x: textX, y: baseline - 1 }, end: { x: textX + fitWidth, y: baseline - 1 }, thickness: Math.max(.5, fontSize / 18), color });
         } else if (item.type === 'image') {
           let embedded = imageCache.get(item.bytes);
