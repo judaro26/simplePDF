@@ -51,7 +51,7 @@ function render() {
           <h1>Your PDFs.<br /><span>Still yours.</span></h1>
           <p class="hero-lede">Simple PDF tools that work right in your browser. Your files stay on your device—not on our servers.</p>
           <div class="hero-actions"><a class="button button-primary" href="#workspace">Choose a PDF tool <span>→</span></a><div class="trust-note"><span class="lock-icon">▣</span><span><b>No upload.</b><br />Processing happens locally.</span></div></div>
-          <div class="hero-proof"><span class="proof-check">✓</span> No account needed <i></i> Files stay in your browser <i></i> No ad scripts by default</div>
+          <div class="hero-proof"><span class="proof-check">✓</span> No account needed <i></i> Files stay in your browser <i></i> No ad units live yet</div>
         </div>
         <div class="hero-art" aria-hidden="true">
           <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
