@@ -35,6 +35,7 @@ Text editing covers the selected text visually and adds replacement text. It doe
 
 - The app does not send selected file bytes to a server. Files are held in memory for the current browser session and generated downloads are created locally.
 - No analytics, account system, serverless upload function, or active ad units are configured. The AdSense site-verification script is loaded; the labeled ad placements remain placeholders and no ads/revenue are active yet.
+- `public/ads.txt` declares the supplied AdSense publisher as a direct seller. After deployment, confirm `https://simplexpdf.netlify.app/ads.txt` serves this exact line and use AdSense Sites → Check for updates if the dashboard still says Not found.
 - Activating ad serving requires account/site approval, ad-unit IDs, a verified domain, and any consent-management disclosures or controls required for your audience. Review what Google and any CMP collect, update the Privacy Notice, and verify live requests before serving ads. Never encourage users to click ads.
 - Netlify, DNS providers, and other infrastructure providers may process request metadata such as IP addresses. Browser-only document processing does not mean the hosting site collects no data whatsoever.
 - Do not market this as legally risk-free or promise immunity from lawsuits. Have qualified counsel review terms, privacy disclosures, intellectual-property issues, security headers, and applicable laws before launch.
